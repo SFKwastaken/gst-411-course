@@ -239,6 +239,7 @@ h1.title {
     margin-bottom: 1.5rem;
     background: linear-gradient(to right, #ffffff, var(--accent));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     line-height: 1.2;
 }
@@ -390,11 +391,37 @@ h1.title {
 .option-btn.correct {
     background: rgba(16, 185, 129, 0.2);
     border-color: var(--success);
+    color: #6ee7b7;
+    animation: correctPulse 0.6s ease-out;
 }
 
 .option-btn.wrong {
     background: rgba(239, 68, 68, 0.2);
     border-color: var(--error);
+    color: #fca5a5;
+}
+
+/* Keep revealed colours when buttons are disabled */
+.option-btn:disabled {
+    cursor: default;
+    opacity: 1;
+}
+.option-btn:disabled:not(.correct):not(.wrong) {
+    opacity: 0.4;
+}
+
+@keyframes correctPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+    70%  { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Disabled Next button */
+#next-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 .quiz-nav-row {

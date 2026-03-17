@@ -5,6 +5,7 @@ class GSTHub {
         this.currentQuiz = [];
         this.currentQuestionIndex = 0;
         this.userAnswers = [];
+        this.answeredQuestions = new Set(); // tracks questions already revealed
         this.isExam = false;
 
         this.init();
@@ -82,6 +83,7 @@ class GSTHub {
         this.currentQuiz = [...this.currentChapter.quiz].sort(() => Math.random() - 0.5);
         this.currentQuestionIndex = 0;
         this.userAnswers = new Array(this.currentQuiz.length).fill(null);
+        this.answeredQuestions = new Set();
         
         document.getElementById('chapter-content').style.display = 'none';
         document.getElementById('quiz-interface').style.display = 'flex';
@@ -95,6 +97,7 @@ class GSTHub {
         this.currentQuiz = [...this.data.finalExam].sort(() => Math.random() - 0.5);
         this.currentQuestionIndex = 0;
         this.userAnswers = new Array(this.currentQuiz.length).fill(null);
+        this.answeredQuestions = new Set();
 
         this.showScreen('content-viewer');
         document.getElementById('chapter-content').style.display = 'none';
@@ -106,24 +109,45 @@ class GSTHub {
     }
 
     renderQuestion() {
-        const q = this.currentQuiz[this.currentQuestionIndex];
-        document.getElementById('quiz-progress').innerText = `Question ${this.currentQuestionIndex + 1}/${this.currentQuiz.length}`;
+        const idx = this.currentQuestionIndex;
+        const q = this.currentQuiz[idx];
+        const alreadyAnswered = this.answeredQuestions.has(idx);
+        const userAnswer = this.userAnswers[idx];
+
+        document.getElementById('quiz-progress').innerText = `Question ${idx + 1}/${this.currentQuiz.length}`;
         document.getElementById('question-text').innerText = q.question;
 
         const optionsGrid = document.getElementById('options-grid');
-        optionsGrid.innerHTML = q.options.map((opt, i) => `
-            <button class="option-btn ${this.userAnswers[this.currentQuestionIndex] === i ? 'selected' : ''}" 
-                    onclick="app.selectOption(${i})">
+        optionsGrid.innerHTML = q.options.map((opt, i) => {
+            let cls = 'option-btn';
+            if (alreadyAnswered) {
+                // Reveal: correct answer always green, wrong choice red
+                if (i === q.answer) cls += ' correct';
+                else if (i === userAnswer) cls += ' wrong';
+            } else if (userAnswer === i) {
+                cls += ' selected';
+            }
+            const disabled = alreadyAnswered ? 'disabled' : '';
+            return `<button class="${cls}" onclick="app.selectOption(${i})" ${disabled}>
                 ${String.fromCharCode(65 + i)}. ${opt}
-            </button>
-        `).join('');
+            </button>`;
+        }).join('');
 
         document.getElementById('prev-btn').disabled = this.currentQuestionIndex === 0;
-        document.getElementById('next-btn').innerText = this.currentQuestionIndex === this.currentQuiz.length - 1 ? 'Submit' : 'Next';
+
+        const isLast = idx === this.currentQuiz.length - 1;
+        const nextBtn = document.getElementById('next-btn');
+        nextBtn.innerText = isLast ? 'Submit' : (alreadyAnswered ? 'Next →' : 'Next');
+        // Only enable Next/Submit after the question has been answered
+        nextBtn.disabled = !alreadyAnswered;
     }
 
     selectOption(index) {
-        this.userAnswers[this.currentQuestionIndex] = index;
+        const idx = this.currentQuestionIndex;
+        // Ignore clicks if already answered
+        if (this.answeredQuestions.has(idx)) return;
+        this.userAnswers[idx] = index;
+        this.answeredQuestions.add(idx);
         this.renderQuestion();
     }
 
